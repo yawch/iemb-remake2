@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>i-EMB | Login</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.24.0/babel.js"></script>
+    <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script> 
+    <link rel="stylesheet" href="/css/global.css">
+    <style>
+        #app {
+            display: flex;
+            flex-direction: column;
+        }
+        h3 {
+            font-weight: 300;
+            font-size: 21px;
+            margin: 35px auto 15px auto;
+            text-align: center;
+        }
+        h3 .big {
+            font-size: 30px;
+            display: block;
+        }
+        h3 .red {
+            color: var(--primary-color);
+        }
+        .label {
+            font-size: 20px;
+            margin: 35px 0 5px 15px;
+        }
+        .label span {
+            font-size: 15px;
+            color: var(--primary-color);
+        }
+        .input {
+            background-color: var(--secondary-color);
+            border: none;
+            border-radius: 6px;
+            outline: none;
+            padding: 12px;
+            transition: background-color 0.2s ease-in-out;
+            margin: 0 15px;
+        }
+        .input:focus {
+            background-color: #afadad;
+        }
+        button {
+            margin: 55px 0 0 15px;
+            width: 110px;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            outline: none;
+            cursor: pointer;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    <script>
+        const signIn = () => {
+            document.querySelector('label[for="username"]').innerHTML = 'Username';
+            document.querySelector('label[for="password"]').innerHTML = 'Password';
+            let username = document.querySelector('#username').value, password = document.querySelector('#password').value;
+            if (!username) document.querySelector('label[for="username"]').innerHTML = 'Username <span>must not be empty</span>';
+            else if (!password) document.querySelector('label[for="password"]').innerHTML = 'Password <span>must not be empty</span>';
+            else if (!/^\d{6}[a-z]$/i.test(username)) document.querySelector('label[for="username"]').innerHTML = 'Username <span>is invalid</span>';
+            else {
+                (async () => {
+                    let res = await fetch('api/validateUser', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username: username, password: password })
+                    });
+                    let data = await res.json();
+                    if (data.success) {
+                        document.cookie = `sessid=${data.sessid};`;
+                        location.href = '/messages';
+                    }
+                    else if (data.reason == 'invalid') document.querySelector('label[for="password"]').innerHTML = 'Password <span>is invalid</span>';
+                    else alert('An unknown error has occurred');
+                })();
+            }
+        }
+        // trigger button click when enter key pressed
+        window.addEventListener('keyup', (e) => {
+            if (e.keyCode === 13) {
+                signIn();
+            }
+        });
+    </script>
+    <script type="text/babel">
+        class App extends React.Component {
+            render() {
+                return (
+                    <React.Fragment>
+                        <h3><span className="big">Sign In</span> with your <span className="red">Hwa Chong Institution</span> account</h3>
+                        <label className="label" htmlFor="username">Username</label>
+                        <Input autofocus={ true } type="text" id="username" />
+                        <label className="label" htmlFor="password">Password</label>
+                        <Input type="password" id="password" />
+                        <button onClick={ signIn }>Sign In</button>
+                    </React.Fragment>
+                );
+            }
+        }
+        class Input extends React.Component {
+            render() {
+                return <input spellCheck="false" autoComplete="off" autoFocus={ this.props.autofocus ? true : false } className="input" type={ this.props.type } id={ this.props.id } />
+            }
+        }
+        ReactDOM.render(<App />, document.querySelector('#app'));
+    </script>
+</body>
+</html>

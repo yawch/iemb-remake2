@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>i-EMB | Messages</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.24.0/babel.js"></script>
+    <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script> 
+    <link rel="stylesheet" href="/css/global.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+        }
+        .loader {
+            opacity: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 3;
+            background-color: rgba(245, 243, 243, 0.322);
+            width: 100%;
+            height: 100%;
+            transition: opacity 0.6s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .loader .loadingText {
+            color: #afadad;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        .lds-ring {
+            display: inline-block;
+            position: relative;
+            width: 64px;
+            height: 64px;
+        }
+        .lds-ring div {
+            box-sizing: border-box;
+            display: block;
+            position: absolute;
+            width: 51px;
+            height: 51px;
+            margin: 6px;
+            border: 6px solid var(--primary-color);
+            border-radius: 50%;
+            animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            border-color: var(--primary-color) transparent transparent transparent;
+        }
+        .lds-ring div:nth-child(1) {
+            animation-delay: -0.45s;
+        }
+        .lds-ring div:nth-child(2) {
+            animation-delay: -0.3s;
+        }
+        .lds-ring div:nth-child(3) {
+            animation-delay: -0.15s;
+        }
+        @keyframes lds-ring {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #app > h4 {
+            font-weight: 300;
+            color: #afadad;
+            font-size: 20px;
+            text-align: center;
+            margin-top: 77px;
+        }
+        .content {
+            z-index: -1;
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 5px;
+            background-color: #fff;
+            word-wrap: break-word;
+            width: calc(100% - 10px);
+        }
+        .content nav > h4 {
+            font-size: 20px;
+            font-weight: 500;
+            margin: 0 0 5px 0;
+        }
+        .content nav span {
+            font-size: 18px;
+            color: #afadad;
+        }
+        .content > hr {
+            margin: 2px 0 12px 0;
+        }
+        .content .x-button {
+            position: fixed;
+            top: 20px;
+            right: 10px;
+            background-image: radial-gradient(#fff 0,rgba(255,255,255,0) 80%);
+            cursor: pointer;
+        }
+        .content {
+            font-size: 18px;
+            transition: opacity 0.3s ease-in-out;
+            background-color: #fff;
+            max-width: 100%;
+        }
+        .content pre {
+            white-space: pre-wrap;
+        }
+        .content table {
+            table-layout: fixed;
+            max-width: 100%;
+            border-collapse: collapse;
+        }
+        .content table * {
+            font-size: 15px;
+        }
+        .content p {
+            margin: 0 !important;
+        }
+        .topbar {
+            position: fixed;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--primary-color);
+            box-shadow: 0.2px 0.2px 1px 0px rgba(218,81,81,1);
+            width: 100%;
+            top: 0;
+            left: 0;
+            background-color: #fff;
+            z-index: 2;
+        }
+        .topbar * {
+            margin: 3px;
+        }
+        img {
+            width: 40px;
+        }
+        .hidden {
+            display: none;
+        }
+        .input {
+            background-color: var(--secondary-color);
+            border: none;
+            border-radius: 6px;
+            outline: none;
+            padding: 8px;
+            transition: background-color 0.3s ease-in-out;
+            width: 100%;
+            font-size: 20px;
+        }
+        .input:focus {
+            background-color: #afadad;
+        }
+        #app > ul {
+            padding: 0;
+            margin: 47px 0 0 0;
+            z-index: 1;
+            height: 100vh;
+        }
+        .post {
+            border-bottom: 1px solid #afadad;
+            cursor: pointer;
+            padding: 2px 0 5px 0;
+            list-style-type: none;
+            margin: 0;
+            transition: background-color 0.3s ease-in-out;
+            position: relative;
+        }
+        .post:hover {
+            background-color: var(--secondary-color);
+        }
+        .post h4 {
+            font-weight: 300;
+            margin: 0 0 2px 0;
+            padding: 0 20px;
+            white-space: nowrap; 
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 20px;
+        }
+        .unread::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 5px;
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+        }
+        .date, .sender {
+            color: #afadad;
+            font-size: 18px;
+        }
+        .date {
+            padding-left: 20px;
+        }
+        .sender {
+            float: right;
+            padding: 0 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+        <span class="loadingText"></span>
+    </div>
+    <div id="app"></div>
+    <div class="content"></div>
+    <script>
+        const showLoader = (text) => {
+            document.querySelector('.loader').style.opacity = 1;
+            document.querySelector('.loader').style.zIndex = 3;
+            document.querySelector('.loader .loadingText').textContent = text;
+        }
+        const hideLoader = () => {
+            document.querySelector('.loader').style.opacity = 0;
+            document.querySelector('.loader').style.zIndex = -1;
+        }
+        const hideMessage = () => {
+            document.querySelector('.content').style.zIndex = -1;
+            document.querySelector('.content').style.opacity = 0;
+            document.querySelector('ul').style.display = 'block';
+        }
+        const showMessage = (message) => {
+            document.querySelector('.content').innerHTML = `
+                <nav>
+                    <h4>${message.title}</h4>
+                    <span class="from">${message.sender} on </span>
+                    <span class="dateSent">${message.date}</span>
+                </nav>
+                <i class="material-icons x-button">close</i>
+                <hr>
+                ${message.content.replace(/&nbsp;/g, '')}
+            `.trim();
+            document.querySelector('.x-button').addEventListener('click', hideMessage);
+            document.querySelector('.content').style.zIndex = 3;
+            document.querySelector('.content').style.opacity = 1;
+            document.querySelector('ul').style.display = 'none';
+        }
+    </script>
+    <script type="text/babel">
+        let counter = 0;
+        class ListItem extends React.Component {
+            _isMounted = false;
+            constructor(props) {
+                super(props);
+            }
+            state = {
+                hasContent: false,
+                content: ''
+            }
+            getMessageContent = async () => {
+                if (!this.state.hasContent && this._isMounted) {
+                    let data;
+                    const response = await fetch('api/getMessageContent', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            board: this.props.board,
+                            id: this.props.id,
+                            sessid: document.cookie.slice(7)
+                        }),
+                    });
+                    data = await response.json();
+                    this._isMounted && this.setState({ hasContent: true, content: data.content.trim() });
+                }
+            }
+            componentDidMount() {
+                this._isMounted = true;
+                setTimeout(() => {
+                    this.getMessageContent();
+                }, counter * 2500);
+                counter++;
+            }
+            componentWillUnmount() {
+                this._isMounted = false;
+            }
+            async showContent() {
+                showLoader('Loading Message...');
+                if (!this.state.hasContent) await this.getMessageContent();
+                showMessage({...this.props, content: this.state.content});
+                hideLoader();
+            }
+            render() {
+                return (
+                    <li onClick={ async () => await this.showContent() } className={`post${this.props.unread ? ' unread' : ''}`}>
+                        <h4>{ this.props.title }</h4>
+                        <span className="date">{ this.props.date }</span>
+                        <span className="sender">{ this.props.abbrsender }</span>
+                    </li>
+                );
+            }
+        }
+        class App extends React.Component {
+            state = {
+                originalMessages: [],
+                messages: [],
+                loaded: false
+            }
+            async getMessages() {
+                // send post request to api
+                const response = await fetch('/api/getMessages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessid: document.cookie.slice(7)
+                    })
+                });
+                const data = await response.json();
+                if (!data.success && data.reason == 'sessid') location.href = '/';
+                else if (!data.success && data.reason == 'unknown') alert('An unknown error has occurred');
+                else {
+                    data.messages.forEach((message, index) => message.i = index);
+                    return data.messages;
+                }
+            }
+            async componentDidMount() {
+                showLoader('Fetching Messages...');
+                this.setState({ originalMessages: await this.getMessages() });
+                this.setState({ messages: this.state.originalMessages });
+                this.setState({ loaded: true });
+                hideLoader();
+            }
+            handleKeyUp() {
+                // handle searchbar functionality
+                let searchTerm = document.querySelector('#search').value.toLowerCase();
+                searchTerm ? this.setState({ messages: this.state.originalMessages.filter((message) => message.title.toLowerCase().includes(searchTerm) || message.abbrsender.toLowerCase().includes(searchTerm))}) : this.setState({ messages: this.state.originalMessages });
+            }
+            render() {
+                // bar at the top
+                let topBar = (
+                    <nav className="topbar">
+                        <img src="/logo.svg" alt="Hwa Chong Logo" />
+                        <input onKeyUp={ () => this.handleKeyUp() } spellCheck="false" autoComplete="off" className="input" type="text" id="search" placeholder="Search" />
+                    </nav>
+                );
+
+                // if messages not loaded yet...
+                if (!this.state.loaded) return topBar;
+                // if search term yields no results...
+                else if (this.state.messages.length == 0) return (
+                    <React.Fragment>
+                        { topBar }
+                        <h4>No messages matching your search term</h4>
+                    </React.Fragment>
+                )
+
+                // build array of <li> from this.state.messages
+                const messageList = this.state.messages.map((message) => <ListItem key={message.i} {...message} />)
+                return (
+                    <React.Fragment>
+                        { topBar }
+                        <ul>{ messageList }</ul>
+                    </React.Fragment>
+                );
+            }
+        }
+        ReactDOM.render(<App />, document.querySelector('#app'));
+    </script>
+</body>
+</html>
