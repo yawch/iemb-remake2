@@ -63,13 +63,29 @@ app.post('/api/getMessages', (req, res) => {
 
 app.post('/api/getMessageContent', (req, res) => {
     (async () => {
-        const response = await fetch(`https://iemb.hci.edu.sg/Board/content/${req.body.id}?board=${req.body.board}&isArchived=False`, {
-            method: 'GET',
+        try {
+            const response = await fetch(`https://iemb.hci.edu.sg/Board/content/${req.body.id}?board=${req.body.board}&isArchived=False`, {
+                method: 'GET',
+                headers: {
+                    Cookie: `ASP.NET_SessionId=${req.body.sessid};`
+                }
+            }), html = await response.text();
+            res.json(scrapeContent(html));
+        } catch (err) {
+            console.log(err);
+            res.send('no');
+        }
+    })();
+});
+
+app.post('/api/getAttachments', (req, res) => {
+    (async () => {
+        const response = await fetch(`https://iemb.hci.edu.sg/Board/ShowFile?t=2&ctype=1&id=${req.body.id}&file=${encodeURIComponent(req.body.file)}&boardId=${req.body.board}`, {
             headers: {
                 Cookie: `ASP.NET_SessionId=${req.body.sessid};`
             }
-        }), html = await response.text();
-        res.json({ 'content': scrapeContent(html) });
+        }), data = await response.buffer();
+        res.send(data);
     })();
 });
 

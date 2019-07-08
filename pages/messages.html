@@ -113,7 +113,7 @@
         }
         .content table {
             table-layout: fixed;
-            max-width: 100%;
+            width: 100%;
             border-collapse: collapse;
         }
         .content table * {
@@ -121,6 +121,27 @@
         }
         .content p {
             margin: 0 !important;
+        }
+        .content img {
+            max-width: 100%;
+        }
+        .content iframe {
+            width: 100%;
+        }
+        .content .attachments {
+            border: 1px solid #000;
+            margin-top: 20px;
+            padding: 15px;
+        }
+        .content .attachments h4 {
+            margin: 0;
+        }
+        .content .attachments .attachment {
+            color: #1E88E5;
+            text-decoration: underline;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px 0;
         }
         .topbar {
             position: fixed;
@@ -137,7 +158,7 @@
         .topbar * {
             margin: 3px;
         }
-        img {
+        .topbar img {
             width: 40px;
         }
         .hidden {
@@ -214,6 +235,28 @@
     <div id="app"></div>
     <div class="content"></div>
     <script>
+        const showAttachment = async (board, id, file) => {
+            const response = await fetch('api/getAttachments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sessid: document.cookie.slice(7),
+                    board,
+                    id,
+                    file
+                })
+            }), 
+                  data = await response.blob(),
+                  url = window.URL.createObjectURL(new Blob([data])),
+                  link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', file);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        }
         const showLoader = (text) => {
             document.querySelector('.loader').style.opacity = 1;
             document.querySelector('.loader').style.zIndex = 3;
@@ -229,23 +272,26 @@
             document.querySelector('ul').style.display = 'block';
         }
         const showMessage = (message) => {
-            document.querySelector('.content').innerHTML = `
-                <nav>
+            document.querySelector('.content').innerHTML = `<nav>
                     <h4>${message.title}</h4>
                     <span class="from">${message.sender} on </span>
                     <span class="dateSent">${message.date}</span>
                 </nav>
                 <i class="material-icons x-button">close</i>
                 <hr>
-                ${message.content.replace(/&nbsp;/g, '')}
-            `.trim();
+                ${message.content}`;
+            if (message.attachments.length != 0) document.querySelector('.content').innerHTML += `<div class="attachments"><h4>Attachments</h4>${message.attachments.map((message) => `<p class="attachment">${message}</p>`).join('')}</div>`;
             document.querySelector('.x-button').addEventListener('click', hideMessage);
+            document.querySelectorAll('.attachment').forEach((attachment) => {
+               attachment.addEventListener('click', async () => await showAttachment(message.board, message.id, attachment.innerText));
+            });
             document.querySelector('.content').style.zIndex = 3;
             document.querySelector('.content').style.opacity = 1;
             document.querySelector('ul').style.display = 'none';
         }
     </script>
     <script type="text/babel">
+        // used for keeping track of intervals between ajax requests
         let counter = 0;
         class ListItem extends React.Component {
             _isMounted = false;
@@ -254,7 +300,8 @@
             }
             state = {
                 hasContent: false,
-                content: ''
+                content: '',
+                attachments: []
             }
             getMessageContent = async () => {
                 if (!this.state.hasContent && this._isMounted) {
@@ -271,7 +318,8 @@
                         }),
                     });
                     data = await response.json();
-                    this._isMounted && this.setState({ hasContent: true, content: data.content.trim() });
+                    // cancel this.setState if component unmounted
+                    this._isMounted && this.setState({ hasContent: true, content: data.content.trim(), attachments: data.attachments });
                 }
             }
             componentDidMount() {
@@ -279,7 +327,7 @@
                 setTimeout(() => {
                     this.getMessageContent();
                 }, counter * 2500);
-                counter++;
+                this._isMounted && counter++;
             }
             componentWillUnmount() {
                 this._isMounted = false;
@@ -287,7 +335,7 @@
             async showContent() {
                 showLoader('Loading Message...');
                 if (!this.state.hasContent) await this.getMessageContent();
-                showMessage({...this.props, content: this.state.content});
+                showMessage({...this.props, ...this.state});
                 hideLoader();
             }
             render() {
