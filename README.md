@@ -1,4 +1,8 @@
 # iemb-remake2
 redesign of iemb.hci.edu.sg
 
-made with react front-end and express back-end
+## frontend
+html, css, javascript and react
+
+## backend
+node, express, node-fetch for scraping
